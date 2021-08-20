@@ -8,7 +8,7 @@ from datetime import datetime
 
 
 # local imports
-from ofxtools.models.base import Aggregate
+from ofxtools.models.base import Aggregate, UnknownTagWarning
 from ofxtools.models.bank.stmt import INV401KSOURCES
 from ofxtools.models.invest.acct import INVSUBACCTS
 from ofxtools.models.invest.transactions import (
@@ -80,7 +80,7 @@ class OoTestCase(unittest.TestCase, base.TestAggregate):
         SubElement(root, "FITID").text = "1001"
         SubElement(root, "SRVRTID").text = "2002"
         root.append(securities.SecidTestCase.etree)
-        SubElement(root, "DTPLACED").text = "20040701000000.000[0:GMT]"
+        SubElement(root, "DTPLACED").text = "20040701000000.000[+0:UTC]"
         SubElement(root, "UNITS").text = "150"
         SubElement(root, "SUBACCT").text = "CASH"
         SubElement(root, "DURATION").text = "GOODTILCANCEL"
@@ -139,7 +139,7 @@ class OobuydebtTestCase(unittest.TestCase, base.TestAggregate):
         root = Element("OOBUYDEBT")
         root.append(OoTestCase.etree)
         SubElement(root, "AUCTION").text = "N"
-        SubElement(root, "DTAUCTION").text = "20120109000000.000[0:GMT]"
+        SubElement(root, "DTAUCTION").text = "20120109000000.000[+0:UTC]"
         return root
 
     @classproperty
@@ -401,7 +401,7 @@ class InvoolistTestCase(unittest.TestCase, base.TestAggregate):
         root = self.etree
         root.append(bk_stmt.StmttrnTestCase.etree)
 
-        with self.assertRaises(ValueError):
+        with self.assertWarns(UnknownTagWarning):
             Aggregate.from_etree(root)
 
     @classproperty

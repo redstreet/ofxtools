@@ -11,7 +11,7 @@ from decimal import Decimal
 
 
 # local imports
-from ofxtools.models.base import Aggregate
+from ofxtools.models.base import Aggregate, UnknownTagWarning
 from ofxtools.models.i18n import LANG_CODES
 from ofxtools.models.signon import (
     SIGNONMSGSRQV1,
@@ -60,7 +60,7 @@ from ofxtools.models.bank.msgsets import (
     WIREXFERMSGSETV1,
     WIREXFERMSGSET,
 )
-from ofxtools.models.bank.stmt import ACCTTYPES, STMTRS
+from ofxtools.models.bank.stmt import STMTRS
 from ofxtools.models.bank.stmtend import STMTENDRS
 from ofxtools.models.invest.msgsets import (
     INVSTMTMSGSRQV1,
@@ -189,7 +189,7 @@ class Profmsgsrqv1TestCase(unittest.TestCase, base.TestAggregate):
         root = self.etree
         root.append(profile.ProftrnrsTestCase.etree)
 
-        with self.assertRaises(ValueError):
+        with self.assertWarns(UnknownTagWarning):
             Aggregate.from_etree(root)
 
 
@@ -218,7 +218,7 @@ class Profmsgsrsv1TestCase(unittest.TestCase, base.TestAggregate):
         root = self.etree
         root.append(profile.ProftrnrqTestCase.etree)
 
-        with self.assertRaises(ValueError):
+        with self.assertWarns(UnknownTagWarning):
             Aggregate.from_etree(root)
 
 
@@ -282,7 +282,7 @@ class Signupmsgsrqv1TestCase(unittest.TestCase, base.TestAggregate):
         root = self.etree
         root.append(signup.EnrolltrnrsTestCase.etree)
 
-        with self.assertRaises(ValueError):
+        with self.assertWarns(UnknownTagWarning):
             Aggregate.from_etree(root)
 
 
@@ -312,7 +312,7 @@ class Signupmsgsrsv1TestCase(unittest.TestCase, base.TestAggregate):
         root = self.etree
         root.append(signup.EnrolltrnrqTestCase.etree)
 
-        with self.assertRaises(ValueError):
+        with self.assertWarns(UnknownTagWarning):
             Aggregate.from_etree(root)
 
 
@@ -397,7 +397,7 @@ class Emailmsgsrqv1TestCase(unittest.TestCase, base.TestAggregate):
         root = self.etree
         root.append(email.MailtrnrsTestCase.etree)
 
-        with self.assertRaises(ValueError):
+        with self.assertWarns(UnknownTagWarning):
             Aggregate.from_etree(root)
 
 
@@ -436,7 +436,7 @@ class Emailmsgsrsv1TestCase(unittest.TestCase, base.TestAggregate):
         root = self.etree
         root.append(email.MailtrnrqTestCase.etree)
 
-        with self.assertRaises(ValueError):
+        with self.assertWarns(UnknownTagWarning):
             Aggregate.from_etree(root)
 
 
@@ -536,7 +536,7 @@ class Bankmsgsrqv1TestCase(unittest.TestCase, base.TestAggregate):
         root = self.etree
         root.append(bk_stmt.StmttrnrsTestCase.etree)
 
-        with self.assertRaises(ValueError):
+        with self.assertWarns(UnknownTagWarning):
             Aggregate.from_etree(root)
 
 
@@ -599,7 +599,7 @@ class Bankmsgsrsv1TestCase(unittest.TestCase, base.TestAggregate):
         root = self.etree
         root.append(bk_stmt.StmttrnrqTestCase.etree)
 
-        with self.assertRaises(ValueError):
+        with self.assertWarns(UnknownTagWarning):
             Aggregate.from_etree(root)
 
     def testPropertyAliases(self):
@@ -620,7 +620,7 @@ class XferprofTestCase(unittest.TestCase, base.TestAggregate):
     def etree(cls):
         root = Element("XFERPROF")
         SubElement(root, "PROCDAYSOFF").text = "SUNDAY"
-        SubElement(root, "PROCENDTM").text = "170000.000[0:GMT]"
+        SubElement(root, "PROCENDTM").text = "170000.000[+0:UTC]"
         SubElement(root, "CANSCHED").text = "Y"
         SubElement(root, "CANRECUR").text = "Y"
         SubElement(root, "CANMODXFERS").text = "N"
@@ -654,7 +654,7 @@ class StpchkprofTestCase(unittest.TestCase, base.TestAggregate):
     def etree(cls):
         root = Element("STPCHKPROF")
         SubElement(root, "PROCDAYSOFF").text = "SUNDAY"
-        SubElement(root, "PROCENDTM").text = "170000.000[0:GMT]"
+        SubElement(root, "PROCENDTM").text = "170000.000[+0:UTC]"
         SubElement(root, "CANUSERANGE").text = "Y"
         SubElement(root, "CANUSEDESC").text = "Y"
         SubElement(root, "STPCHKFEE").text = "30.1"
@@ -858,7 +858,7 @@ class Interxfermsgsrqv1TestCase(unittest.TestCase, base.TestAggregate):
         root = self.etree
         root.append(interxfer.IntertrnrsTestCase.etree)
 
-        with self.assertRaises(ValueError):
+        with self.assertWarns(UnknownTagWarning):
             Aggregate.from_etree(root)
 
 
@@ -901,7 +901,7 @@ class Interxfermsgsrsv1TestCase(unittest.TestCase, base.TestAggregate):
         root = self.etree
         root.append(interxfer.IntertrnrqTestCase.etree)
 
-        with self.assertRaises(ValueError):
+        with self.assertWarns(UnknownTagWarning):
             Aggregate.from_etree(root)
 
 
@@ -979,7 +979,7 @@ class Wirexfermsgsrqv1TestCase(unittest.TestCase, base.TestAggregate):
         root = self.etree
         root.append(wire.WiretrnrsTestCase.etree)
 
-        with self.assertRaises(ValueError):
+        with self.assertWarns(UnknownTagWarning):
             Aggregate.from_etree(root)
 
 
@@ -1013,7 +1013,7 @@ class Wirexfermsgsrsv1TestCase(unittest.TestCase, base.TestAggregate):
         root = self.etree
         root.append(wire.WiretrnrqTestCase.etree)
 
-        with self.assertRaises(ValueError):
+        with self.assertWarns(UnknownTagWarning):
             Aggregate.from_etree(root)
 
 
@@ -1026,7 +1026,7 @@ class Wirexfermsgsetv1TestCase(unittest.TestCase, base.TestAggregate):
         root = Element("WIREXFERMSGSETV1")
         root.append(MsgsetcoreTestCase.etree)
         SubElement(root, "PROCDAYSOFF").text = "SUNDAY"
-        SubElement(root, "PROCENDTM").text = "170000.000[0:GMT]"
+        SubElement(root, "PROCENDTM").text = "170000.000[+0:UTC]"
         SubElement(root, "CANSCHED").text = "Y"
         SubElement(root, "DOMXFERFEE").text = "7.50"
         SubElement(root, "INTLXFERFEE").text = "17.50"
@@ -1174,7 +1174,7 @@ class WirexfermsgsetTestCase(unittest.TestCase, base.TestAggregate):
 #  SubElement(root, "XFERDAYSWITH").text = "3"
 #  SubElement(root, "XFERDFLTDAYSTOPAY").text = "5"
 #  SubElement(root, "PROCDAYSOFF").text = "SUNDAY"
-#  SubElement(root, "PROCENDTM").text = "170000.000[0:GMT]"
+#  SubElement(root, "PROCENDTM").text = "170000.000[+0:UTC]"
 #  SubElement(root, "MODELWND").text = "3"
 #  SubElement(root, "POSTPROCWND").text = "6"
 #  SubElement(root, "STSVIAMODS").text = "N"
@@ -1250,7 +1250,7 @@ class Invstmtmsgsrqv1TestCase(unittest.TestCase, base.TestAggregate):
         root = self.etree
         root.append(invest.InvstmttrnrsTestCase.etree)
 
-        with self.assertRaises(ValueError):
+        with self.assertWarns(UnknownTagWarning):
             Aggregate.from_etree(root)
 
 
@@ -1281,7 +1281,7 @@ class Invstmtmsgsrsv1TestCase(unittest.TestCase, base.TestAggregate):
         root = self.etree
         root.append(invest.InvstmttrnrqTestCase.etree)
 
-        with self.assertRaises(ValueError):
+        with self.assertWarns(UnknownTagWarning):
             Aggregate.from_etree(root)
 
     def testPropertyAliases(self):
@@ -1374,7 +1374,7 @@ class Seclistmsgsrqv1TestCase(unittest.TestCase, base.TestAggregate):
         root = self.etree
         root.append(securities.SeclisttrnrsTestCase.etree)
 
-        with self.assertRaises(ValueError):
+        with self.assertWarns(UnknownTagWarning):
             Aggregate.from_etree(root)
 
 
@@ -1407,7 +1407,7 @@ class Seclistmsgsrsv1TestCase(unittest.TestCase, base.TestAggregate):
         root = self.etree
         root.append(securities.SeclisttrnrqTestCase.etree)
 
-        with self.assertRaises(ValueError):
+        with self.assertWarns(UnknownTagWarning):
             Aggregate.from_etree(root)
 
 
@@ -1598,7 +1598,7 @@ class MsgsetlistTestCase(unittest.TestCase, base.TestAggregate):
         root = self.etree
         root.append(bk_stmt.StmttrnrsTestCase.etree)
 
-        with self.assertRaises(ValueError):
+        with self.assertWarns(UnknownTagWarning):
             Aggregate.from_etree(root)
 
 

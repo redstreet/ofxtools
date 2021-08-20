@@ -47,15 +47,15 @@ from ofxtools import utils
 
 
 class OFXTypeWarning(UserWarning):
-    """ Base class for warnings in this module """
+    """Base class for warnings in this module"""
 
 
 class OFXTypeError(ValueError):
-    """ Base class for errors in this module """
+    """Base class for errors in this module"""
 
 
 class OFXSpecError(OFXTypeError):
-    """ Violation of the OFX specification """
+    """Violation of the OFX specification"""
 
 
 def call_signature(*args, **kwargs):
@@ -399,11 +399,11 @@ class Decimal(Element):
         #  Rewrite ``self.scale`` from # of digits to a ``decimal.Decimal`` instance
         #  That can be directly fed into ``decimal.Decimal.quantize()``
         if self.scale is not None:
-            self.scale = decimal.Decimal("0.{}1".format("0" * (self.scale - 1)))
+            self.scale = decimal.Decimal(f"0.{'0' * (self.scale - 1)}1")
 
     @singledispatchmethod
     def convert(self, value):
-        """ Default dispatch convert() for unregistered type """
+        """Default dispatch convert() for unregistered type"""
         # None should be dispatched to _convert_none()
         assert value is not None
         # By default, attempt a naive conversion to subclass type
@@ -512,8 +512,45 @@ DT_REGEX = re.compile(
 )
 
 
+def format_datetime(format: str, value: datetime.datetime) -> str:
+    """
+    Format a `datetime` or `time` according to the OFX specification.
+
+    The value must include timezone information which will be preserved in the OFX
+    string.
+
+    The value is rounded to the nearest millisecond since OFX doesn't support
+    microsecond resolution.
+    """
+    utcoffset = value.utcoffset()
+    if utcoffset is None:
+        raise ValueError(f"{value} is not timezone-aware")
+
+    # Round to nearest millisecond by adding 500 us and truncating.
+    # N.B. the value being increased by half a millisecond is
+    # carried forward to this function's return value, to ensure that
+    # the rounded time has the seconds dial bumped if necessary.
+    value_bumped = value + datetime.timedelta(microseconds=500)
+    ms = value_bumped.microsecond // 1000
+
+    # OFX takes the UTC offset formatted as +h[.mm].
+    offset_mins = utcoffset // datetime.timedelta(minutes=1)
+    hours, mins = divmod(abs(offset_mins), 60)
+    sign = "-" if offset_mins < 0 else "+"
+    tz = f"{sign}{hours:d}"
+    if mins != 0:
+        tz += f".{mins:02d}"
+
+    # Note that tzname() is permitted to return None.
+    tzname = value.tzname()
+    if tzname is not None:
+        tz += ":" + tzname
+
+    return f"{value_bumped.strftime(format)}.{ms:03d}[{tz}]"
+
+
 class DateTime(Element):
-    """ OFX Section 3.2.8.2 """
+    """OFX Section 3.2.8.2"""
 
     # __type__ must be compatible with Time subclass override
     __type__: Union[Type[datetime.datetime], Type[datetime.time]] = datetime.datetime
@@ -588,25 +625,10 @@ class DateTime(Element):
     @unconvert.register
     def _unconvert_datetime(self, value: datetime.datetime):
         if not hasattr(value, "utcoffset") or value.utcoffset() is None:
-            msg = f"'{value}' isn't a timezone-aware {self.__type__} instance; can't convert to GMT"
+            msg = f"'{value}' must be a timezone-aware {self.__type__} instance"
             raise ValueError(msg)
 
-        # Transform to GMT
-        value = value.astimezone(utils.UTC)
-
-        # Round datetime.datetime microseconds to milliseconds per OFX spec.
-        # Can't naively format microseconds via strftime() due
-        # to need to round to milliseconds.  Instead, manually round
-        # microseconds, then insert milliseconds into string format template.
-        millisecond = round(value.microsecond / 1000)  # 99500-99999 round to 1000
-        second_delta, millisecond = divmod(millisecond, 1000)
-        value += datetime.timedelta(
-            seconds=second_delta
-        )  # Push seconds dial if necessary
-
-        millisec_str = "{0:03d}".format(millisecond)
-        fmt = "%Y%m%d%H%M%S.{}[0:GMT]".format(millisec_str)
-        return value.strftime(fmt)
+        return format_datetime("%Y%m%d%H%M%S", value)
 
     @unconvert.register
     def _unconvert_none(self, value: None) -> None:
@@ -649,7 +671,7 @@ TIME_REGEX = re.compile(
 
 
 class Time(DateTime):
-    """ OFX Section 3.2.8.3 """
+    """OFX Section 3.2.8.3"""
 
     __type__ = datetime.time
     regex = TIME_REGEX
@@ -698,10 +720,9 @@ class Time(DateTime):
     @unconvert.register
     def _unconvert_time(self, value: datetime.time):
         if not hasattr(value, "utcoffset") or value.utcoffset() is None:
-            msg = f"'{value}' isn't a timezone-aware {self.__type__} instance; can't convert to GMT"
+            msg = f"'{value}' must be a timezone-aware {self.__type__} instance"
             raise ValueError(msg)
 
-        # Transform to GMT
         dt = datetime.datetime(
             1999,
             6,
@@ -710,11 +731,9 @@ class Time(DateTime):
             value.minute,
             value.second,
             microsecond=value.microsecond,
+            tzinfo=value.tzinfo,
         )
-        dt -= value.utcoffset()  # type: ignore
-        milliseconds = "{0:03d}".format((dt.microsecond + 500) // 1000)
-        fmt = "%H%M%S.{}[0:GMT]".format(milliseconds)
-        return dt.strftime(fmt)
+        return format_datetime("%H%M%S", dt)
 
     @unconvert.register
     def _unconvert_none(self, value: None) -> None:
@@ -769,7 +788,7 @@ class SubAggregate(Element):
 
     #  This doesn't get used
     #  def __repr__(self):
-    #  return "<{}>".format(self.__type__.__name__)
+    #  return f"<{self.__type__.__name__}>"
 
 
 class ListAggregate(SubAggregate):

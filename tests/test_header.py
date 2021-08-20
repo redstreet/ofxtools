@@ -140,7 +140,7 @@ class OFXHeaderV1TestCase(unittest.TestCase, OFXHeaderTestMixin):
     """.strip()
 
     def testParseHeaderDefaults(self):
-        """ Test parse_header() with default values for OFXv1 """
+        """Test parse_header() with default values for OFXv1"""
         header = str(self.headerClass(self.defaultVersion))
         ofx = header + self.body
         ofx = BytesIO(ofx.encode("ascii"))
@@ -159,7 +159,7 @@ class OFXHeaderV1TestCase(unittest.TestCase, OFXHeaderTestMixin):
         self.assertEqual(body, self.body)
 
     def testParseHeaderLatin1(self):
-        """ Test parse_header() with ISO-8859-1 charset """
+        """Test parse_header() with ISO-8859-1 charset"""
         header = str(
             self.headerClass(
                 self.defaultVersion, encoding="UTF-8", charset="ISO-8859-1"
@@ -182,7 +182,7 @@ class OFXHeaderV1TestCase(unittest.TestCase, OFXHeaderTestMixin):
         self.assertEqual(body, self.body)
 
     def testParseHeader1252(self):
-        """ Test parse_header() with 1252 charset """
+        """Test parse_header() with 1252 charset"""
         # Issue #25
         header = str(
             self.headerClass(self.defaultVersion, encoding="UTF-8", charset="1252")
@@ -204,7 +204,7 @@ class OFXHeaderV1TestCase(unittest.TestCase, OFXHeaderTestMixin):
         self.assertEqual(body, self.body_cp1252)
 
     def testParseHeaderUnicode(self):
-        """ Test parse_header() with UTF-8 charset """
+        """Test parse_header() with UTF-8 charset"""
         # Issue #49
         header = str(
             self.headerClass(self.defaultVersion, encoding="UTF-8", charset="NONE")
@@ -410,7 +410,7 @@ class OFXHeaderV2TestCase(unittest.TestCase, OFXHeaderTestMixin):
     }
 
     def testParseHeaderV2NoNewlineBetweenHeaderAndBody(self):
-        """ OFXv2 doesn't need newline between header and message body """
+        """OFXv2 doesn't need newline between header and message body"""
         # Issue #47
         header = str(self.headerClass(self.defaultVersion))
         ofx = header.strip() + self.body
@@ -465,6 +465,27 @@ class OFXHeaderV2TestCase(unittest.TestCase, OFXHeaderTestMixin):
     def testParseHeader(self):
         # Test parse_header() for version 2
         header = str(self.headerClass(self.defaultVersion))
+        ofx = header + self.body
+        ofx = BytesIO(ofx.encode("utf8"))
+        ofxheader, body = ofxtools.header.parse_header(ofx)
+
+        self.assertEqual(ofxheader.ofxheader, 200)
+        self.assertEqual(ofxheader.version, self.defaultVersion)
+        self.assertEqual(ofxheader.security, "NONE")
+        self.assertEqual(ofxheader.oldfileuid, "NONE")
+        self.assertEqual(ofxheader.newfileuid, "NONE")
+
+        self.assertEqual(body, self.body)
+
+    def testParseHeaderSingleQuotedDeclarationData(self):
+        # The XML spec allows data to be quoted within either single or double quotes
+        # Make sure that single-quoted data in the XML declaration is captured by
+        # ``ofxtools.header.XML_REGEX``
+        header = str(self.headerClass(self.defaultVersion))
+        header = (
+            "<?xml version='1.0' encoding='UTF-8' standalone='no'?>"
+            + header[header.find("<?OFX") :]
+        )
         ofx = header + self.body
         ofx = BytesIO(ofx.encode("utf8"))
         ofxheader, body = ofxtools.header.parse_header(ofx)

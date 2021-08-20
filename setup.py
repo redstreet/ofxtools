@@ -3,9 +3,15 @@ Release process:
     1. Update ofxtools.__version__.__version__
     2. Change download_url below
     3. Commit changes & push
-    4. `git tag` the release
-    5. Push tags
-    6. Change download_url back to master; commit & push
+    4.  Test: `python setup.py sdist`
+    5.  Test: `twine upload --repository-url https://test.pypi.org/legacy/ dist/*`
+    6.  Test result: Check https://test.pypi.org/project/ofxtools
+    7.  `git tag` the release
+    8.  `git push --tags`
+    9.  Verify that new tag shows at https://github.com/csingley/ofxtools/releases
+    10. `twine upload dist/*`
+    11. `make clean`
+    12. Change download_url back to master; commit & push
 """
 # stdlib imports
 import os.path
@@ -37,7 +43,7 @@ setup(
     license=ABOUT["__license__"],
     # Note: change 'master' to the tag name when releasing a new verion
     download_url="{}/master".format(URL_BASE),
-    #  download_url="{}/{}".format(URL_BASE, ABOUT["__version__"]),
+    # download_url="{}/{}".format(URL_BASE, ABOUT["__version__"]),
     entry_points={"console_scripts": ["ofxget=ofxtools.scripts.ofxget:main"]},
     classifiers=[
         "Development Status :: 3 - Alpha",
@@ -49,12 +55,13 @@ setup(
         "Topic :: Office/Business :: Financial",
         "Topic :: Office/Business :: Financial :: Accounting",
         "Topic :: Office/Business :: Financial :: Investment",
-        "License :: OSI Approved :: MIT License",
+        "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
         "Operating System :: OS Independent",
         "Natural Language :: English",
         "Programming Language :: Python",
         "Programming Language :: Python :: 3 :: Only",
         "Programming Language :: Python :: 3.8",
+        "Programming Language :: Python :: 3.9",
     ],
     keywords=["ofx", "Open Financial Exchange"],
 )
